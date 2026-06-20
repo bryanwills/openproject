@@ -1,6 +1,7 @@
 <div
   data-controller="backlogs--backlog-filter-select-panel"
   data-backlogs--backlog-filter-select-panel-filter-key-value="<%= filter_field %>"
+  data-backlogs--backlog-filter-select-panel-base-url-value="<%= backlog_show_path %>"
   data-action="itemActivated->backlogs--backlog-filter-select-panel#refreshButtons
                panelClosed->backlogs--backlog-filter-select-panel#revertOnClose">
   <%= render(

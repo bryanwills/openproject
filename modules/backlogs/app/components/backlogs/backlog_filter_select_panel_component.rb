@@ -48,6 +48,10 @@ module Backlogs
       dom_target(filter_field_name, :filter_select_panel)
     end
 
+    def backlog_show_path
+      project_backlogs_backlog_path(project)
+    end
+
     def item_id(item)
       dom_target(panel_id, :item, item.id.to_s)
     end

@@ -31,6 +31,8 @@
 require "rails_helper"
 
 RSpec.describe Backlogs::BacklogFilterSelectPanelComponent, type: :component do
+  include Rails.application.routes.url_helpers
+
   shared_let(:project) { create(:project) }
   shared_let(:user) { create(:admin) }
 
@@ -123,6 +125,16 @@ RSpec.describe Backlogs::BacklogFilterSelectPanelComponent, type: :component do
         "[data-backlogs--backlog-filter-select-panel-filter-key-value='bucket_ids']" \
         "[data-action*='itemActivated->backlogs--backlog-filter-select-panel#refreshButtons']" \
         "[data-action*='panelClosed->backlogs--backlog-filter-select-panel#revertOnClose']"
+      )
+    end
+
+    it "exposes the backlog show path as the navigation base url" do
+      render_component(field_name: :bucket_ids)
+
+      expect(page).to have_css(
+        "[data-controller='backlogs--backlog-filter-select-panel']" \
+        "[data-backlogs--backlog-filter-select-panel-base-url-value=" \
+        "'#{project_backlogs_backlog_path(project)}']"
       )
     end
 

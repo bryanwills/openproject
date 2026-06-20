@@ -43,19 +43,26 @@ const FRAME_ID = 'backlogs_container';
 //              NOT submit; instead the selection is reverted to the applied
 //              filter, so the panel always mirrors what is actually applied.
 //
-// The applied filter is read from the URL, which is the single source of truth
-// for both the "has it changed?" check (Apply/Clear enablement) and the revert
-// target. The selection is serialized into the compact comma form
-// (?bucket_ids=1,2,inbox); Backlogs::BacklogFilters parses both that and the
-// legacy array form on the server.
+// The applied filter is read from the backlog show URL, which is the single
+// source of truth for both the "has it changed?" check (Apply/Clear enablement)
+// and the revert target. That base URL is provided as a value so navigation
+// always targets the backlog list endpoint, even when the page URL is a
+// split-view details route (/backlogs/backlog/details/:id) whose frame would
+// otherwise render the split view instead of the list. The selection is
+// serialized into the compact comma form (?bucket_ids=1,2,inbox);
+// Backlogs::BacklogFilters parses both that and the legacy array form on the
+// server.
 export default class BacklogFilterSelectPanelController extends Controller<HTMLElement> {
   static values = {
     filterKey: String,
+    baseUrl: String,
   };
 
   static targets = ['applyButton', 'clearButton'];
 
   declare filterKeyValue:string;
+  declare baseUrlValue:string;
+  declare readonly hasBaseUrlValue:boolean;
   declare readonly applyButtonTarget:HTMLButtonElement;
   declare readonly clearButtonTarget:HTMLButtonElement;
   declare readonly hasApplyButtonTarget:boolean;
@@ -116,7 +123,7 @@ export default class BacklogFilterSelectPanelController extends Controller<HTMLE
   private navigateWith(values:string[]):boolean {
     if (this.submitted || sameMembers(values, this.appliedValues())) return false;
 
-    const url = new URL(window.location.href);
+    const url = this.baseUrl();
     if (values.length > 0) {
       url.searchParams.set(this.filterKeyValue, values.join(','));
     } else {
@@ -154,8 +161,20 @@ export default class BacklogFilterSelectPanelController extends Controller<HTMLE
   }
 
   private appliedValues():Set<string> {
-    const raw = new URL(window.location.href).searchParams.get(this.filterKeyValue);
+    const raw = this.baseUrl().searchParams.get(this.filterKeyValue);
     return new Set(raw ? raw.split(',').map((value) => value.trim()).filter(Boolean) : []);
+  }
+
+  // The navigation/applied-state base: the configured backlog show URL with the
+  // live query string layered on, so other panels' filter params survive and
+  // navigation never targets the split-view details route. Falls back to the
+  // page URL when no base is configured.
+  private baseUrl():URL {
+    const base = this.hasBaseUrlValue
+      ? new URL(this.baseUrlValue, window.location.origin)
+      : new URL(window.location.href);
+    base.search = window.location.search;
+    return base;
   }
 
   // Swappable once Primer exposes a public value accessor on panel items.

@@ -84,6 +84,7 @@ describe('Backlogs filter select panel controller', () => {
   // to connect the controller, which binds asynchronously via a MutationObserver.
   async function mount({
     url = '/projects/demo/backlogs',
+    baseUrl = '/projects/demo/backlogs',
     items = [] as string[],
     checked = [] as string[],
   } = {}) {
@@ -93,6 +94,7 @@ describe('Backlogs filter select panel controller', () => {
       <div
         data-controller="${IDENTIFIER}"
         data-${IDENTIFIER}-filter-key-value="bucket_ids"
+        data-${IDENTIFIER}-base-url-value="${baseUrl}"
         data-action="itemActivated->${IDENTIFIER}#refreshButtons panelClosed->${IDENTIFIER}#revertOnClose"
       >
         <select-panel></select-panel>
@@ -227,6 +229,25 @@ describe('Backlogs filter select panel controller', () => {
       const params = lastVisitedUrl().searchParams;
       expect(params.get('bucket_ids')).toBe('1,2');
       expect(params.get('sprint_ids')).toBe('9');
+    });
+
+    it('navigates the backlog list endpoint, not the split-view details route', async () => {
+      // On a split-view details page the browser URL is the details route, but
+      // the frame must reload the backlog list. Navigation derives its path from
+      // the configured base URL, not window.location.
+      const root = await mount({
+        url: '/projects/demo/backlogs/backlog/details/42?bucket_ids=1',
+        baseUrl: '/projects/demo/backlogs',
+        items: ['1', '2'],
+        checked: ['1'],
+      });
+      toggle('2', true);
+
+      controllerFor(root).apply();
+
+      const visited = lastVisitedUrl();
+      expect(visited.pathname).toBe('/projects/demo/backlogs');
+      expect(visited.searchParams.get('bucket_ids')).toBe('1,2');
     });
   });
 
