@@ -5,10 +5,9 @@
   @media screen and (min-width: $breakpoint-lg)
     @include extended-content--left
 
-  @media screen and (min-width: $breakpoint-lg)
-    // Do not offset the breadcrumbs within documents as page header is nested within main layout
-    #wrapper .hidden-navigation .PageHeader-contextBar
-      margin-left: 0
+  // Do not offset the breadcrumbs within documents as page header is nested within main layout
+  #wrapper .hidden-navigation .PageHeader-contextBar
+    margin-left: 0
 
 .op-document-view
   .PageHeader
@@ -29,6 +28,15 @@
       margin: 0 auto
       padding-left: var(--base-size-16, 1rem)
       padding-right: var(--base-size-16, 1rem)
+
+  // Align the title with the editor body, which is offset by the editor column's
+  // base-size-16 padding (desktop --editor rule / mobile tab panel px:3) plus the gutter.
+  &--header
+    padding-left: calc(var(--base-size-16, 1rem) + #{$blocknote-side-menu-gutter})
+
+  // Notices sit beside the editor, not inside it, so add the gutter to align them.
+  &--editor-notice
+    padding-left: $blocknote-side-menu-gutter
 
   .UnderlineNav
     padding-left: var(--base-size-16, 1rem)
