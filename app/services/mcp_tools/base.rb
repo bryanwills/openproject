@@ -233,5 +233,9 @@ module McpTools
 
       scope.offset((page_number - 1) * page_size).limit(page_size)
     end
+
+    def api_v3_paths
+      ::API::V3::Utilities::PathHelper::ApiV3Path
+    end
   end
 end

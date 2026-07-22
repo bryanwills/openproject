@@ -49,6 +49,7 @@ Rails.application.config.after_initialize do
                     McpTools::CurrentUser,
                     McpTools::ListStatuses,
                     McpTools::ListTypes,
+                    McpTools::ListWorkPackageRelations,
                     McpTools::SearchPortfolios,
                     McpTools::SearchPrograms,
                     McpTools::SearchProjects,
