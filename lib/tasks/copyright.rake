@@ -78,7 +78,8 @@ namespace :copyright do
 
   def global_excluded_globs
     %w[
-      frontend/node_modules/**/*
+      **/node_modules/**/*
+      **/vendor/**/*
       tmp/**/*
       modules/gitlab_integration/**/*
     ]
@@ -88,7 +89,21 @@ namespace :copyright do
     case format
     when :ruby, :rb
       /\A(?<shebang>#![^\n]+\n)?(?<additional>.*)?#--\s*copyright.*?\+\+/m
-    when :js, :css, :sass, :ts
+    when :js, :ts
+      %r{
+        \A
+        (?<shebang>\#![^\n]+\n)?
+        (?<additional>)
+        (?:
+          (?=//(?:\s*--\s*copyright|\s*OpenProject\ is\ an\ open\ source\ project\ management\ software\.))
+          (?:^//[^\n]*(?:\n|\z))+
+          |
+          (?=/\*.*?(?:--\s*copyright|OpenProject\ is\ an\ open\ source\ project\ management\ software\.))
+          /\*.*?\*/
+        )
+        (?:[^\S\n]*\n)*
+      }mx
+    when :css, :sass
       /\A(?<shebang>#![^\n]+\n)?(?<additional>.*)?\/\/\s*--\s*copyright.*?\/\/\s*\+\+/m
     when :erb
       /\A(?<shebang>#![^\n]+\n)?(?<additional>.*)?<%#--\s*copyright.*?\+\+#%>/m
@@ -107,6 +122,8 @@ namespace :copyright do
     case format
     when :ruby, :rb
       /\A(?<shebang>#![^\n]+\n\n?)?(?<additional># frozen_string_literal: (?:true|false)\n\n?)?\n*/m
+    when :js, :ts
+      /\A(?<shebang>#![^\n]+\n\n?)?(?<additional>)/
     else
       raise "Format #{format} is not yet supported for copyright creation"
     end
@@ -129,7 +146,9 @@ namespace :copyright do
 
       file_content = File.read(file_name)
       if file_content.match(regexp)
-        file_content.gsub!(regexp, "\\k<shebang>\\k<additional>#{copyright}")
+        replacement = "\\k<shebang>\\k<additional>#{copyright}"
+        replacement += "\n\n" if options[:ensure_blank_line]
+        file_content.gsub!(regexp, replacement)
       elsif options[:create]
         if file_content.include?("OpenProject is a fork of ChiliProject")
           puts "#{file_name} does not match regexp, but seems to have a copyright header!"
@@ -223,9 +242,14 @@ namespace :copyright do
     rewrite_copyright("sql", [], :sql, args[:path])
   end
 
-  desc "Update the copyright on .js source files"
+  desc "Update the copyright on .js, .mjs, and .cjs source files"
   task :update_js, :path do |_task, args|
-    rewrite_copyright("js", [], :js, args[:path])
+    path = args[:path] || "."
+    file_list = %w[js mjs cjs].flat_map do |ending|
+      Dir.glob("#{path}/**/*.#{ending}", File::FNM_DOTMATCH)
+    end
+
+    rewrite_copyright("js", [], :js, path, file_list:, create: true, ensure_blank_line: true)
   end
 
   desc "Update the copyright on .js.erb source files"
@@ -265,9 +289,14 @@ namespace :copyright do
     rewrite_copyright("text.erb", [], :erb, args[:path])
   end
 
-  desc "Update the copyright on .ts source files"
+  desc "Update the copyright on .ts and .tsx source files"
   task :update_typescript, :path do |_task, args|
-    rewrite_copyright("ts", [], :ts, args[:path])
+    path = args[:path] || "."
+    file_list = %w[ts tsx].flat_map do |ending|
+      Dir.glob("#{path}/**/*.#{ending}", File::FNM_DOTMATCH)
+    end
+
+    rewrite_copyright("ts", [], :ts, path, file_list:, create: true, ensure_blank_line: true)
   end
 
   desc "Update the copyright on all source files"
