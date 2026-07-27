@@ -27,15 +27,51 @@
 //++
 
 import eslint from '@eslint/js';
+import { readFileSync } from 'node:fs';
 import globals from 'globals';
+import { fileURLToPath } from 'node:url';
 import tseslint from 'typescript-eslint';
 import vitest from '@vitest/eslint-plugin';
 import angular from 'angular-eslint';
 import stylistic from '@stylistic/eslint-plugin';
+import headers from 'eslint-plugin-headers';
 
 import { defineConfig, globalIgnores } from 'eslint/config';
 
+const copyrightPath = fileURLToPath(new URL('../COPYRIGHT_short', import.meta.url));
+const copyrightHeader = [
+  '-- copyright',
+  ...readFileSync(copyrightPath, 'utf8')
+    .trimEnd()
+    .split(/\r?\n/)
+    .map((line) => line ? ` ${line}` : ''),
+  '++',
+].join('\n');
+
 export default defineConfig([
+  {
+    files: ['**/*.{js,mjs,cjs,ts,tsx}'],
+    plugins: { headers },
+    rules: {
+      'headers/header-format': [
+        'error',
+        {
+          source: 'string',
+          content: copyrightHeader,
+          style: 'line',
+          linePrefix: '',
+          trailingNewlines: 2,
+        },
+      ],
+    },
+  },
+  {
+    // eslint-plugin-headers cannot detect a header when a file has no source tokens.
+    files: ['src/app/features/projects/form-helpers/form-attribute-groups.ts'],
+    rules: {
+      'headers/header-format': 'off',
+    },
+  },
   {
     files: ['**/*.{js,mjs,cjs}'],
     extends: [
