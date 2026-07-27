@@ -42,4 +42,24 @@ RSpec.describe "My account is never served stale after an out-of-band change", :
 
     expect_fresh_account
   end
+
+  # Green in Chrome (it revalidates on reload) but stale in Firefox, where the HTTP
+  # cache / bfcache serves the old page; fixed by `Cache-Control: no-store`.
+  it "is fresh after a reload" do
+    page.refresh
+
+    expect_fresh_account
+  end
+
+  # Navigating back to the account page through the menu is a fresh Turbo visit;
+  # this guards that it keeps fetching current data.
+  it "is fresh after navigating away and back via the menu" do
+    click_on "Notification and email"
+    expect(page).to have_current_path(my_notifications_path, wait: 10, ignore_query: true)
+
+    click_on "Account"
+    expect(page).to have_current_path(my_account_path, wait: 10, ignore_query: true)
+
+    expect_fresh_account
+  end
 end
